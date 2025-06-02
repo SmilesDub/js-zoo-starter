@@ -1,37 +1,105 @@
-const wordList = [
- "apple", "blaze", "crane", "dance", "eagle", "flame", "gears", "horse", "ivory", "jewel","knock", "ledge", "mango", "noble", "orbit", "peace", "quest", "river", "stone", "table","urban", "vivid", "whale", "xerox", "yield", "zebra", "angle", "brisk", "cloud", "drape","elbow", "frost", "grain", "haste", "inlet", "joint", "kneel", "latch", "mirth", "nudge",
- "opine", "prism", "quiet", "rouse", "shack", "torch", "unzip", "vigor", "wired", "zesty",
- "agile", "brine", "cider", "dodge", "epoch", "flute", "ghost", "hound", "imbue", "juice",
- "kraut", "leash", "minor", "north", "oasis", "patch", "quota", "rinse", "slice", "truce",
- "usher", "visit", "woven", "yacht", "zebra", "alone", "bluff", "chill", "drift", "ember",
- "flair", "grind", "hinge", "ideal", "jolly", "kiosk", "lemon", "magic", "never", "olive",
- "plume", "quirk", "roost", "slate", "tonic", "upper", "vixen", "wreck", "xylen", "yield",
- "ample", "brush", "carve", "dealt", "enter", "flock", "gloat", "hiker", "infer", "jumps",
- "knead", "laugh", "modal", "nurse", "outer", "piper", "quail", "ratio", "scrap", "tense",
- "usual", "vault", "watch", "xerox", "yodel", "angle", "brook", "crave", "dress", "exist",
- "fresh", "grove", "helix", "incur", "joust", "kicks", "limit", "moist", "noble", "opium",
- "point", "quick", "rover", "score", "throw", "utter", "vowel", "whisk", "youth", "zonal",
- "alert", "braid", "chuck", "drink", "erect", "flash", "giant", "halls", "irate", "jewel",
- "kinks", "ledge", "mover", "night", "ocean", "plank", "quiet", "rushy", "shelf", "tower",
- "unity", "vigor", "witty", "xerox", "yeast", "zebra", "admit", "badge", "chair", "daisy",
- "event", "flown", "gloom", "hatch", "inner", "jiffy", "karma", "leapt", "mocha", "nerve",
- "opine", "place", "quest", "ripple", "stack", "trace", "under", "visit", "wrath", "zippy"
-];
 
+let word;
+let wordArr = [];
+let guessArr = [];
 
-function main () {
-    var word = selectWord();
-    console.log(word);
-    var wordArray = [...word];
-    console.log(wordArray);
+window.addEventListener('load', main);
+
+function main() {
+  word = selectWord();
+  console.log(word);
+  wordArr = [...word];
+  console.log(wordArr);
 }
 
-function selectWord() {  
-    var randomIndex = Math.floor(Math.random() * wordList.length);
-    return wordList[randomIndex]
+function selectWord() {
+  var randomIndex = Math.floor(Math.random() * wordList.length);
+  return wordList[randomIndex];
 }
+
+document.addEventListener("keydown", type);
+
 
 async function checkWordReal(guess) {
-    let response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${guess}`);
-    return response.ok;
+  let response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${guess}`);
+  console.log(response);
+  let boo = response.ok;
+  console.log(boo);
+  return boo;
 }
+
+function compareWords() {
+  let count = 0;
+  for (let i = 0; i < 5; i++) {
+    if (guessArr[i] == wordArr[i]) {
+      document.getElementById(`${currentRow}${i}`).style.backgroundColor = "green";
+      count++;
+      document.getElementById(guessArr[i]).style.backgroundColor = "green";
+    } else if (wordArr.includes(guessArr[i])) {
+      document.getElementById(`${currentRow}${i}`).style.backgroundColor = "yellow";
+      document.getElementById(guessArr[i]).style.backgroundColor = "yellow";
+    } else {
+      document.getElementById(`${currentRow}${i}`).style.backgroundColor = "grey";
+      document.getElementById(guessArr[i]).style.backgroundColor = "grey";
+    }
+  }
+  if(count == 5) {
+    document.getElementById("message").innerHTML = "you win. TOOK YOU THIS LONG!";
+  }
+}
+
+let currentRow = 0;
+let currentCol = 0;
+const maxCols = 5;
+const maxRows = 6;
+let board = Array.from({ length: maxRows }, () => Array(maxCols).fill(""));
+
+async function type(e) {
+  if (currentRow >= maxRows) return;
+
+  if (e.key == "Backspace") {
+    if (currentCol > 0) {
+      guessArr.pop();
+      console.log(guessArr);
+      currentCol--;
+      board[currentRow][currentCol] = "";
+      updateCell(currentRow, currentCol, "");
+    }
+  } else if (e.key == "Enter") {
+    if (currentCol == maxCols) {
+      let wordGuess = guessArr.join("");
+      let value = await checkWordReal(wordGuess);
+      console.log(value);
+      if (value == true) {
+        compareWords();
+        guessArr = [];
+        wordGuess = board[currentRow].join("").toLowerCase();
+        currentRow++;
+        currentCol = 0;
+        document.getElementById("message").innerHTML = "";
+      } else {
+        document.getElementById("message").innerHTML = "NOT A WORD YOU IDIOT! SOME PEOPLE NEVER LEARN!";
+      }
+    }
+  } else if (/^[a-zA-Z]$/.test(e.key)) {
+    if (currentCol < maxCols) {
+      let letter = e.key.toUpperCase();
+      guessArr.push(e.key.toLowerCase());
+      console.log(guessArr);
+      board[currentRow][currentCol] = letter;
+      updateCell(currentRow, currentCol, letter);
+      currentCol++;
+    }
+  }
+};
+
+function updateCell(row, col, value) {
+  const cell = document.getElementById(`${row}${col}`);
+  if (cell) cell.innerText = value;
+}
+
+
+
+
+
+
